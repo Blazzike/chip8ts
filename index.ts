@@ -135,7 +135,7 @@ const instructionSet: Instruction[] = [
     regV[0xF] = diff < 0 ? 0 : 1;
     regV[x] = diff & 0xFF;
   }),
-  compileInstruction('8xy6', ({x, y}) => {
+  compileInstruction('8xy6', ({x}) => {
     regV[0xF] = regV[x] & 0x1;
     regV[x] >>= 1;
   }),
@@ -143,7 +143,7 @@ const instructionSet: Instruction[] = [
     regV[0xF] = regV[y] >= regV[x] ? 1 : 0;
     regV[x] = (regV[y] - regV[x]) & 0xFF;
   }),
-  compileInstruction('8xyE', ({x, y}) => {
+  compileInstruction('8xyE', ({x}) => {
     regV[0xF] = regV[x] >> 7;
     regV[x] <<= 1;
   }),
@@ -169,14 +169,14 @@ const instructionSet: Instruction[] = [
     const somePixelsErased = display.draw(bytes, posX, posY);
     regV[0xF] = somePixelsErased ? 1 : 0;
   }),
-  compileInstruction('Ex9E', ({x}) => {
+  compileInstruction('Ex9E', () => {
     // TOOD:
     // Skip next instruction if key with the value of Vx is pressed.
     // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
 
     // for now, let's just do nothing
   }),
-  compileInstruction('ExA1', ({x}) => {
+  compileInstruction('ExA1', () => {
     // TODO:
     // Skip next instruction if key with the value of Vx is not pressed.
     // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
@@ -267,11 +267,19 @@ function executeInstruction() {
   regPc += 2;
 }
 
-const instructionRate = 3000; // default: 540 Hz
+const instructionRate = 540; // default: 540 Hz
+const timerRate = 60;
 
 let cycleCount = 0;
 let startTime = Date.now();
+let lastTimerDecrement = 0;
 while (true) {
+  if ((Date.now() - lastTimerDecrement) / 1000 > 1 / timerRate) {
+    if (regDt > 0) regDt--;
+
+    lastTimerDecrement = Date.now();
+  }
+
   executeInstruction();
   cycleCount++;
   let targetCycleCount = 0;
@@ -279,9 +287,3 @@ while (true) {
     targetCycleCount = Math.floor(((Date.now() - startTime) / 1000) * instructionRate);
   }
 }
-
-const timerRate = 60;
-const timerInterval = 1000 / timerRate;
-setInterval(() => {
-  if (regDt > 0) regDt--;
-}, timerInterval);
