@@ -265,6 +265,10 @@ function executeInstruction() {
   }
 
   regPc += 2;
+
+  if (regPc >= kProgramStart + rom.length) {
+    throw new Error('Program finished');
+  }
 }
 
 const instructionRate = 540; // default: 540 Hz
